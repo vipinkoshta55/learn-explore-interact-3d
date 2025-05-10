@@ -2,12 +2,23 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, LogOut, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,6 +42,15 @@ const Navbar = () => {
     { name: "Chemistry", path: "/subjects/chemistry" },
     { name: "Dashboard", path: "/dashboard" },
   ];
+
+  const handleLogout = async () => {
+    await signOut();
+  };
+
+  const getInitials = () => {
+    if (!user) return "?";
+    return ((user.email || "").charAt(0) || "?").toUpperCase();
+  };
 
   return (
     <nav
@@ -68,12 +88,41 @@ const Navbar = () => {
           </div>
           <div className="hidden md:block">
             <div className="flex items-center space-x-2">
-              <Button variant="ghost" asChild>
-                <Link to="/auth/login">Log in</Link>
-              </Button>
-              <Button asChild>
-                <Link to="/auth/register">Sign up</Link>
-              </Button>
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                      <Avatar>
+                        <AvatarImage src={user.user_metadata?.avatar_url} alt="Profile" />
+                        <AvatarFallback>{getInitials()}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="w-full cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link to="/auth/login">Log in</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link to="/auth/register">Sign up</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
           <div className="md:hidden">
@@ -106,16 +155,40 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="pt-4 flex flex-col space-y-2">
-              <Button variant="ghost" asChild className="justify-center">
-                <Link to="/auth/login" onClick={() => setMobileMenuOpen(false)}>
-                  Log in
-                </Link>
-              </Button>
-              <Button asChild className="justify-center">
-                <Link to="/auth/register" onClick={() => setMobileMenuOpen(false)}>
-                  Sign up
-                </Link>
-              </Button>
+              {user ? (
+                <>
+                  <Button variant="outline" asChild className="justify-start">
+                    <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </Link>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="justify-start" 
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" asChild className="justify-center">
+                    <Link to="/auth/login" onClick={() => setMobileMenuOpen(false)}>
+                      Log in
+                    </Link>
+                  </Button>
+                  <Button asChild className="justify-center">
+                    <Link to="/auth/register" onClick={() => setMobileMenuOpen(false)}>
+                      Sign up
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

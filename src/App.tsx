@@ -13,6 +13,7 @@ import SubjectPage from "./pages/SubjectPage";
 import ExperimentPage from "./pages/ExperimentPage";
 import QuizPage from "./pages/QuizPage";
 import DashboardPage from "./pages/DashboardPage";
+import ProfilePage from "./pages/ProfilePage";
 import AuthPages from "./pages/AuthPages";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/experiments/:experimentId" element={<ExperimentPage />} />
               <Route path="/experiments/:experimentId/quiz" element={<QuizPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />
