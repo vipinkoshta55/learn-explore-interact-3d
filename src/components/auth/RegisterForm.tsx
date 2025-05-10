@@ -1,10 +1,10 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -14,7 +14,8 @@ const RegisterForm = () => {
     confirmPassword: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const { signUp } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -25,34 +26,22 @@ const RegisterForm = () => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match.",
-        variant: "destructive",
-      });
+      // The toast will be shown by the AuthContext
       return;
     }
     
     setIsLoading(true);
 
     try {
-      // Simulate registration
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // For demo purposes, always succeed
-      toast({
-        title: "Registration successful!",
-        description: "Welcome to SciViz. You're now ready to start exploring.",
+      // Pass user metadata to be stored with the user
+      await signUp(formData.email, formData.password, { 
+        full_name: formData.name,
+        username: formData.email.split('@')[0]
       });
       
-      // In a real app, we would redirect to the dashboard
-      window.location.href = "/dashboard";
+      navigate("/dashboard");
     } catch (error) {
-      toast({
-        title: "Something went wrong",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
+      console.error("Error during registration:", error);
     } finally {
       setIsLoading(false);
     }

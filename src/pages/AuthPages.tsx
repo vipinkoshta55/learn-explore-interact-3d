@@ -3,6 +3,7 @@ import { useParams, Navigate } from "react-router-dom";
 import AuthLayout from "@/components/auth/AuthLayout";
 import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
+import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 
 const AuthPages = () => {
   const { authType } = useParams<{ authType: string }>();
@@ -25,6 +26,17 @@ const AuthPages = () => {
         description="Enter your details below to create your account"
       >
         <RegisterForm />
+      </AuthLayout>
+    );
+  }
+
+  if (authType === "forgot-password") {
+    return (
+      <AuthLayout
+        title="Reset your password"
+        description="Enter your email and we'll send you a reset link"
+      >
+        <ForgotPasswordForm />
       </AuthLayout>
     );
   }
