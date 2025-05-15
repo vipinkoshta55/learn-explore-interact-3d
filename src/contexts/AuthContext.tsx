@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +24,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
+        console.log("Auth state changed:", event, !!newSession);
         setSession(newSession);
         setUser(newSession?.user ?? null);
         setIsLoading(false);
@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("Existing session:", !!currentSession);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setIsLoading(false);
@@ -44,24 +45,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error, data } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         throw error;
       }
+      
+      console.log("Sign in successful, session:", !!data.session);
       
       toast({
         title: "Logged in successfully",
         description: "Welcome back!",
       });
     } catch (error: any) {
+      console.error("Error during login:", error);
       toast({
         title: "Login failed",
         description: error.message || "An error occurred during login",
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -108,8 +115,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const contextValue = { 
+    user, 
+    session,
+    isLoading, 
+    signIn, 
+    signUp, 
+    signOut 
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

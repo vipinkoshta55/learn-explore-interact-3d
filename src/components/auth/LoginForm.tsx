@@ -1,10 +1,11 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -12,6 +13,10 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the previous path the user was trying to access
+  const from = location.state?.from || "/dashboard";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,9 +24,11 @@ const LoginForm = () => {
 
     try {
       await signIn(email, password);
-      navigate("/dashboard");
+      console.log("Login successful, redirecting to:", from);
+      navigate(from, { replace: true });
     } catch (error) {
       console.error("Error during login:", error);
+      // Error is handled in the AuthContext
     } finally {
       setIsLoading(false);
     }
@@ -38,6 +45,7 @@ const LoginForm = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          disabled={isLoading}
         />
       </div>
       <div className="space-y-2">
@@ -57,10 +65,16 @@ const LoginForm = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          disabled={isLoading}
         />
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? "Signing in..." : "Sign in"}
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Signing in...
+          </>
+        ) : "Sign in"}
       </Button>
       <div className="text-center text-sm">
         <span className="text-gray-500 dark:text-gray-400">
