@@ -1,19 +1,53 @@
+
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Chatbot from "@/components/chatbot/Chatbot";
 import Pendulum from "@/components/experiments/Pendulum";
 import ExperimentInfo from "@/components/experiments/ExperimentInfo";
+import ModelViewer from "@/components/experiments/ModelViewer";
+import { getExperimentById } from "@/services/experimentService";
 
 const ExperimentPage = () => {
   const { experimentId } = useParams<{ experimentId: string }>();
+  const [experimentData, setExperimentData] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // This would come from an API in a real app
-  const experimentData = {
+  useEffect(() => {
+    const fetchExperiment = async () => {
+      if (experimentId) {
+        setIsLoading(true);
+        try {
+          // Try to fetch from Supabase first
+          const experiment = await getExperimentById(experimentId);
+          
+          if (experiment) {
+            setExperimentData(experiment);
+          } else {
+            // Fallback to static data
+            setExperimentData(staticExperiments[experimentId as keyof typeof staticExperiments] || null);
+          }
+        } catch (error) {
+          console.error("Error fetching experiment:", error);
+          setExperimentData(staticExperiments[experimentId as keyof typeof staticExperiments] || null);
+          toast.error("Failed to load experiment data");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchExperiment();
+  }, [experimentId]);
+
+  // Static data as fallback
+  const staticExperiments = {
     pendulum: {
       title: "Simple Pendulum",
       subject: "Physics",
@@ -64,11 +98,24 @@ Understanding pendulum physics is also important in engineering, especially for 
     // Other experiments would be defined here in a real app
   };
 
-  const experiment = experimentId && experimentId in experimentData 
-    ? experimentData[experimentId as keyof typeof experimentData] 
-    : null;
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow pt-20 flex items-center justify-center">
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+            <p>Loading experiment...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
-  if (!experiment) {
+  // Error state - experiment not found
+  if (!experimentData) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -86,6 +133,26 @@ Understanding pendulum physics is also important in engineering, especially for 
     );
   }
 
+  // Determine what component to render
+  const renderExperimentComponent = () => {
+    // If there's a custom component defined in the static data
+    if (experimentData.component) {
+      return experimentData.component;
+    }
+    
+    // If there's a model URL from Supabase, render ModelViewer
+    if (experimentData.modelUrl) {
+      return <ModelViewer modelUrl={experimentData.modelUrl} />;
+    }
+    
+    // Default fallback
+    return (
+      <div className="p-6 text-center">
+        <p className="text-muted-foreground">No interactive component available for this experiment.</p>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -95,13 +162,13 @@ Understanding pendulum physics is also important in engineering, especially for 
           <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Link to={`/subjects/${experiment.subject.toLowerCase()}`} className="text-sm font-medium text-muted-foreground hover:text-primary">
-                  {experiment.subject}
+                <Link to={`/subjects/${experimentData.subject?.toLowerCase()}`} className="text-sm font-medium text-muted-foreground hover:text-primary">
+                  {experimentData.subject}
                 </Link>
                 <span className="text-muted-foreground">•</span>
                 <span className="text-sm font-medium text-muted-foreground">Experiment</span>
               </div>
-              <h1 className="text-3xl font-bold">{experiment.title}</h1>
+              <h1 className="text-3xl font-bold">{experimentData.title}</h1>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" asChild>
@@ -118,16 +185,16 @@ Understanding pendulum physics is also important in engineering, especially for 
             </TabsList>
             <TabsContent value="experiment" className="pt-6">
               <Card className="p-6">
-                {experiment.component}
+                {renderExperimentComponent()}
               </Card>
             </TabsContent>
             <TabsContent value="information" className="pt-6">
               <ExperimentInfo 
-                title={experiment.title}
-                description={experiment.description}
-                theory={experiment.theory}
-                application={experiment.application}
-                mathContent={experiment.mathContent}
+                title={experimentData.title}
+                description={experimentData.description}
+                theory={experimentData.theory}
+                application={experimentData.application}
+                mathContent={experimentData.mathContent}
               />
             </TabsContent>
           </Tabs>
