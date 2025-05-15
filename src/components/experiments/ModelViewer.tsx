@@ -6,7 +6,6 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Play, Pause, RotateCcw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 
 interface ModelViewerProps {
@@ -185,7 +184,9 @@ const ModelViewer = ({
               // Loading progress
             },
             (error) => {
-              setError(`Error loading model: ${error.message}`);
+              // Fix: Ensure error has a message property or use a default string
+              const errorMessage = error instanceof Error ? error.message : String(error);
+              setError(`Error loading model: ${errorMessage}`);
               setIsLoading(false);
             }
           );
@@ -219,7 +220,9 @@ const ModelViewer = ({
               // Loading progress
             },
             (error) => {
-              setError(`Error loading model: ${error.message}`);
+              // Fix: Ensure error has a message property or use a default string
+              const errorMessage = error instanceof Error ? error.message : String(error);
+              setError(`Error loading model: ${errorMessage}`);
               setIsLoading(false);
             }
           );
@@ -228,7 +231,9 @@ const ModelViewer = ({
           setIsLoading(false);
         }
       } catch (err) {
-        setError(`Error loading model: ${err instanceof Error ? err.message : String(err)}`);
+        // Fix: Safely handle the error by converting it to a string
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        setError(`Error loading model: ${errorMessage}`);
         setIsLoading(false);
       }
     };
